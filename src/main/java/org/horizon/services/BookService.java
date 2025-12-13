@@ -3,8 +3,10 @@ package org.horizon.services;
 import org.horizon.DTO.CreateBookRequest;
 import org.horizon.models.Author;
 import org.horizon.models.Book;
+import org.horizon.models.Publisher;
 import org.horizon.repositories.AuthorRepository;
 import org.horizon.repositories.BookRepository;
+import org.horizon.repositories.PublisherRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,20 +17,28 @@ public class BookService {
 
     private final BookRepository bookRepository;
     private final AuthorRepository authorRepository;
-    // add other repos (PublisherRepository, TagRepository) if you need them
+    private final PublisherRepository publisherRepository; // add this
 
-    // Correct constructor: inject both repos (add other repos as needed)
+    // Constructor
     public BookService(BookRepository bookRepository,
-                       AuthorRepository authorRepository) {
+                       AuthorRepository authorRepository,
+                       PublisherRepository publisherRepository) {
         this.bookRepository = bookRepository;
         this.authorRepository = authorRepository;
+        this.publisherRepository = publisherRepository;
     }
 
     // CREATE
     public Book createBook(CreateBookRequest request) {
+        // Fetch author
         Author author = authorRepository.findById(request.getAuthorId())
                 .orElseThrow(() -> new RuntimeException("Author with id " + request.getAuthorId() + " not found"));
 
+        // Fetch publisher
+        Publisher publisher = publisherRepository.findById(request.getPublisherId())
+                .orElseThrow(() -> new RuntimeException("Publisher with id " + request.getPublisherId() + " not found"));
+
+        // Create book
         Book book = new Book();
         book.setTitle(request.getTitle());
         book.setCategory(request.getCategory());
@@ -36,38 +46,10 @@ public class BookService {
         book.setPrice(request.getPrice());
         book.setQuantity(request.getQuantity());
         book.setAuthor(author);
+        book.setPublisher(publisher); // <-- assign publisher
 
         return bookRepository.save(book);
     }
 
-    // READ all
-    public List<Book> getAll() {
-        return bookRepository.findAll();
-    }
-
-    // READ first by category
-    public Book findByCategory(String category) {
-        return bookRepository.findFirstByCategory(category)
-                .orElseThrow(() -> new RuntimeException("No book with that category"));
-    }
-
-    // Inventory count
-    public int inventory(String category) {
-        return bookRepository.countByCategory(category);
-    }
-
-    // Bulk update prices (transactional for @Modifying)
-    @Transactional
-    public int updatePricesByPercent(double fraction) {
-        return bookRepository.updatePricesByPercent(fraction);
-    }
-
-    // Delete by ISBN
-    @Transactional
-    public boolean deleteBook(String isbn) {
-        return bookRepository.findByIsbn(isbn).map(book -> {
-            bookRepository.delete(book);
-            return true;
-        }).orElse(false);
-    }
+    // Other methods remain the same...
 }

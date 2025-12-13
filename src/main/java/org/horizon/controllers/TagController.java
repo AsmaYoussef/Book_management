@@ -1,7 +1,10 @@
 package org.horizon.controllers;
 
+import org.horizon.DTO.CreateTagRequest;
+import org.horizon.DTO.UpdateTagRequest;
 import org.horizon.models.Tag;
-import org.horizon.repositories.TagRepository;
+import org.horizon.services.TagService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -10,20 +13,35 @@ import java.util.List;
 @RequestMapping("/api/tags")
 public class TagController {
 
-    private final TagRepository repo;
+    private final TagService tagService;
 
-    public TagController(TagRepository repo) {
-        this.repo = repo;
+    public TagController(TagService tagService) {
+        this.tagService = tagService;
     }
 
     @PostMapping
-    public Tag create(@RequestBody Tag tag) {
-        return repo.save(tag);
+    public ResponseEntity<Tag> create(@RequestBody CreateTagRequest request) {
+        return ResponseEntity.ok(tagService.create(request));
     }
 
     @GetMapping
-    public List<Tag> all() {
-        return repo.findAll();
+    public ResponseEntity<List<Tag>> getAll() {
+        return ResponseEntity.ok(tagService.getAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Tag> getOne(@PathVariable Long id) {
+        return ResponseEntity.ok(tagService.getById(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Tag> update(@PathVariable Long id, @RequestBody UpdateTagRequest request) {
+        return ResponseEntity.ok(tagService.update(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        tagService.delete(id);
+        return ResponseEntity.ok("Tag deleted");
     }
 }
-
